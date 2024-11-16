@@ -150,7 +150,7 @@ footer-hover-col: "#0085A1"
 # Alternatively, the navbar, footer, and page background can be set to an image
 # instead of colour
 
-# navbar-img: "/assets/img/HIT.png"
+navbar-img: "/assets/img/HIT.png"
 # footer-img: "/assets/img/path.jpg"
 # page-img: "/assets/img/path.jpg"
 
