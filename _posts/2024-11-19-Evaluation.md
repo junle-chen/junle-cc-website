@@ -1,6 +1,6 @@
 ---
 layout: post
-title: RHLF（基于人类反馈的强化学习）
+title: LLM-Evaluation
 gh-repo: https://github.com/junle-chen/junle-cc-website
 tags:
   - LLM
