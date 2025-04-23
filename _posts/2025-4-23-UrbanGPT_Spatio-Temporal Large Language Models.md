@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 搭建个人网站进行记录
+title: 2025-4-23-UrbanGPT_Spatio-Temporal Large Language Models
 gh-repo: https://github.com/junle-chen/junle-cc-website
 tags:
   - note
@@ -10,7 +10,7 @@ gh-badge:
   - follow
   - fork
 comments: true
-thumbnail-img: ../assets/img/Pasted%20image%2020241116200201.png
+thumbnail-img: ../assets/img/nailong_images/image_7.jpg
 share-img: /assets/img/path.jpg
 cover-img: /assets/img/path.jpg
 ---
