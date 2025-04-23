@@ -25,6 +25,3 @@ cover-img: /assets/img/path.jpg
 
 
 
-
-![](../assets/img/Pasted%20image%2020250423180836.png)
-
