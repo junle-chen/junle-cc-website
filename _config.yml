@@ -24,7 +24,7 @@ navbar-links:
   Resources:
     - Academic page: "https://junle-chen.github.io/"
     - Github respository: "https://github.com/junle-chen?tab=repositories"
-  Author's home: "https://junle.cc"
+  Author's home: "https://junle.site"
 
 ################
 # --- Logo --- #
@@ -101,7 +101,7 @@ share-links-active:
 
 # How to display the link to your website in the footer
 # Remove this if you don't want a link in the footer
-url-pretty: "junle.cc"
+url-pretty: "junle.site"
 
 # Add the website title to the title of every page
 title-on-all-pages: true

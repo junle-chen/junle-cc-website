@@ -4,5 +4,6 @@
   "translucency": true,
   "enabledCssSnippets": [
     "custom-admonitions.c9c6cb"
-  ]
+  ],
+  "baseFontSize": 21
 }
