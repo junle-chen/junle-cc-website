@@ -131,6 +131,25 @@ layout: page
     </div>
     
     <div id="memosDisplay">
+      <!-- Memos will be rendered by JavaScript combining server and local data -->
+    </div>
+  </div>
+</div>
+
+<!-- Pass server-side public memos to JavaScript -->
+<script id="server-memos-data" type="application/json">
+{% if site.data.memos %}
+{{ site.data.memos | jsonify }}
+{% else %}
+[]
+{% endif %}
+</script>
+
+<!-- Old server-side rendering (kept as fallback for no-JS) -->
+<noscript>
+  <div class="memo-container">
+    <div class="memos-list">
+      <h3>📚 Public Memos (JavaScript Required for Full Features)</h3>
       {% if site.data.memos %}
         {% assign sorted_memos = site.data.memos | sort: 'date' | reverse %}
         {% for memo in sorted_memos %}
@@ -201,7 +220,7 @@ layout: page
       {% endif %}
     </div>
   </div>
-</div>
+</noscript>
 
 <!-- Image Modal -->
 <div id="imageModal" class="image-modal" onclick="closeImageModal()">
@@ -1034,7 +1053,8 @@ layout: page
 <script>
 // Use IndexedDB for larger file storage (supports MB to GB)
 let db;
-let localMemos = [];
+let localMemos = [];  // Private memos from IndexedDB
+let serverMemos = [];  // Public memos from server (Jekyll)
 let attachedImages = [];
 let attachedFiles = [];
 
@@ -1617,7 +1637,12 @@ let currentVisibility = 'all';
 function displayMemos(filter = 'all', searchText = '') {
   const display = document.getElementById('memosDisplay');
   
-  let filteredMemos = localMemos;
+  // Merge server memos (public) and local memos (private)
+  // Server memos are already public, local memos may be public or private
+  const privateMemos = localMemos.filter(m => m.visibility === 'private');
+  const allMemos = [...serverMemos, ...privateMemos];
+  
+  let filteredMemos = allMemos;
   
   // Filter by category
   if (filter !== 'all') {
@@ -1760,11 +1785,11 @@ async function showSyncCommand(memoId) {
 
 // Update stats
 function updateStats() {
-  const publicMemos = localMemos.filter(m => (m.visibility || 'public') === 'public');
   const privateMemos = localMemos.filter(m => m.visibility === 'private');
+  const totalCount = serverMemos.length + privateMemos.length;
   
-  document.getElementById('memoCount').textContent = `${localMemos.length} memo${localMemos.length !== 1 ? 's' : ''}`;
-  document.getElementById('publicCount').textContent = `${publicMemos.length} public`;
+  document.getElementById('memoCount').textContent = `${totalCount} memo${totalCount !== 1 ? 's' : ''}`;
+  document.getElementById('publicCount').textContent = `${serverMemos.length} public`;
   document.getElementById('privateCount').textContent = `${privateMemos.length} private`;
 }
 
@@ -1847,7 +1872,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Load GitHub settings
     loadGithubSettings();
     
-    // Initialize database and memos
+    // Load server-side public memos from Jekyll
+    const serverDataElement = document.getElementById('server-memos-data');
+    if (serverDataElement) {
+      try {
+        serverMemos = JSON.parse(serverDataElement.textContent || '[]');
+        console.log('✓ Loaded', serverMemos.length, 'public memos from server');
+      } catch (e) {
+        console.error('Error parsing server memos:', e);
+        serverMemos = [];
+      }
+    }
+    
+    // Initialize database and load private memos
     await initDB();
     await loadMemos();
     displayMemos();
