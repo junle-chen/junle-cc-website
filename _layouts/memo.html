@@ -1,0 +1,1080 @@
+---
+layout: page
+---
+
+{{ content }}
+
+<div class="memo-container">
+  <div class="add-memo-section">
+    <div class="section-header">
+      <h3>✨ Add New Memo</h3>
+      <p class="text-muted">Record your ideas, tasks and important notes</p>
+    </div>
+    <form id="memoForm">
+      <div class="form-group">
+        <label for="memoTitle">📌 Title</label>
+        <input type="text" id="memoTitle" class="form-control" placeholder="Give your memo a title..." />
+      </div>
+      <div class="form-group">
+        <label for="memoContent">📝 Content</label>
+        <textarea id="memoContent" class="form-control" rows="4" placeholder="Enter your memo content... Supports multiple lines"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label for="memoCategory">🏷️ Category</label>
+          <select id="memoCategory" class="form-control">
+            <option value="general">📋 General</option>
+            <option value="todo">✅ Todo</option>
+            <option value="idea">💡 Idea</option>
+            <option value="note">📖 Note</option>
+          </select>
+        </div>
+        <div class="form-group col-md-6">
+          <label for="memoPriority">⭐ Priority</label>
+          <select id="memoPriority" class="form-control">
+            <option value="normal">Normal</option>
+            <option value="important">Important</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>📎 Attachments</label>
+        <div class="attachment-section">
+          <div class="file-upload-area">
+            <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;" />
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('imageUpload').click()">
+              🖼️ Add Images
+            </button>
+            <input type="file" id="fileUpload" multiple style="display: none;" />
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('fileUpload').click()">
+              📄 Add Files
+            </button>
+            <span class="upload-hint">Multiple files supported</span>
+          </div>
+          <div id="attachmentPreview" class="attachment-preview"></div>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg btn-block">
+        <span>➕ Add Memo</span>
+      </button>
+    </form>
+    <div id="addMemoMessage"></div>
+  </div>
+
+  <div class="memos-list">
+    <div class="list-header">
+      <h3>📚 My Memos</h3>
+      <div class="stats">
+        <span id="memoCount" class="badge badge-info">0 memos</span>
+      </div>
+    </div>
+    
+    <div class="filter-section">
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-category="all">All</button>
+        <button class="filter-btn" data-category="general">📋 General</button>
+        <button class="filter-btn" data-category="todo">✅ Todo</button>
+        <button class="filter-btn" data-category="idea">💡 Idea</button>
+        <button class="filter-btn" data-category="note">📖 Note</button>
+      </div>
+      <div class="search-box">
+        <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search memos..." />
+      </div>
+    </div>
+    
+    <div id="memosDisplay">
+      {% if site.data.memos %}
+        {% assign sorted_memos = site.data.memos | sort: 'date' | reverse %}
+        {% for memo in sorted_memos %}
+        <div class="memo-item priority-{{ memo.priority | default: 'normal' }}" data-category="{{ memo.category }}" data-id="{{ memo.id }}">
+          <div class="memo-header">
+            <div class="header-left">
+              {% if memo.title %}
+              <h5 class="memo-title">{{ memo.title }}</h5>
+              {% else %}
+              <h5 class="memo-title text-muted">无标题备忘</h5>
+              {% endif %}
+            </div>
+            <div class="header-right">
+              {% if memo.priority == 'urgent' %}
+              <span class="priority-badge urgent">🔥 紧急</span>
+              {% elsif memo.priority == 'important' %}
+              <span class="priority-badge important">⭐ 重要</span>
+              {% endif %}
+              <span class="memo-category badge-{{ memo.category }}">
+                {% if memo.category == 'general' %}General
+                {% elsif memo.category == 'todo' %}Todo
+                {% elsif memo.category == 'idea' %}Idea
+                {% elsif memo.category == 'note' %}Note
+                {% else %}{{ memo.category }}{% endif %}
+              </span>
+            </div>
+          </div>
+          <div class="memo-content">{{ memo.content }}</div>
+          {% if memo.images or memo.files %}
+          <div class="memo-attachments">
+            {% if memo.images %}
+              <div class="images-grid">
+                {% for image in memo.images %}
+                <img src="{{ image }}" alt="attachment" class="attachment-image" onclick="openImageModal(this.src)" />
+                {% endfor %}
+              </div>
+            {% endif %}
+            {% if memo.files %}
+              <div class="files-list">
+                {% for file in memo.files %}
+                <a href="{{ file.url }}" class="file-item" download="{{ file.name }}">
+                  📎 {{ file.name }}
+                </a>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          {% endif %}
+          <div class="memo-footer">
+            <span class="memo-date">🕐 {{ memo.date }}</span>
+            <div class="memo-actions">
+              <button class="btn-icon" onclick="toggleComplete({{ memo.id }})" title="Mark as complete">
+                <span class="complete-icon">✓</span>
+              </button>
+              <button class="btn-icon" onclick="deleteMemo({{ memo.id }})" title="Delete">
+                <span class="delete-icon">🗑️</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📝</div>
+          <p>No memos yet</p>
+          <p class="text-muted">Add your first memo now!</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+  <span class="close-modal">&times;</span>
+  <img class="modal-content" id="modalImage">
+  <div id="caption"></div>
+</div>
+
+<style>
+:root {
+  --primary-color: #0288D1;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-bg: #f8f9fa;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --hover-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  --border-radius: 12px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.memo-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Add Memo Section */
+.add-memo-section {
+  background: linear-gradient(135deg, #B3E5FC 0%, #81D4FA 100%);
+  padding: 30px;
+  border-radius: var(--border-radius);
+  margin-bottom: 40px;
+  box-shadow: var(--card-shadow);
+  color: white;
+}
+
+.section-header h3 {
+  margin: 0 0 5px 0;
+  font-size: 1.8em;
+  font-weight: 600;
+}
+
+.section-header p {
+  margin: 0 0 20px 0;
+  opacity: 0.9;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.95em;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  font-size: 1em;
+  transition: var(--transition);
+  background: rgba(255,255,255,0.95);
+  color: #333;
+  min-height: 48px;
+  line-height: 1.5;
+}
+
+.form-control option {
+  padding: 8px;
+  line-height: 1.8;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: white;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.2);
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.col-md-6 {
+  flex: 1;
+}
+
+/* 附件上传区域 */
+.attachment-section {
+  background: rgba(255,255,255,0.1);
+  padding: 15px;
+  border-radius: 8px;
+  border: 2px dashed rgba(255,255,255,0.3);
+}
+
+.file-upload-area {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.btn-outline-secondary {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.9em;
+}
+
+.btn-outline-secondary:hover {
+  background: rgba(255,255,255,0.3);
+  transform: translateY(-2px);
+}
+
+.upload-hint {
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+.attachment-preview {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.preview-item {
+  position: relative;
+  background: rgba(255,255,255,0.2);
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+}
+
+.preview-item img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.preview-remove {
+  cursor: pointer;
+  margin-left: 5px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.preview-remove:hover {
+  opacity: 1;
+}
+
+.btn-primary {
+  background: white;
+  color: #0288D1;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 1.1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.btn-lg {
+  width: 100%;
+}
+
+#addMemoMessage {
+  margin-top: 15px;
+  padding: 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  text-align: center;
+  display: none;
+}
+
+#addMemoMessage.success {
+  background: rgba(40, 167, 69, 0.2);
+  border: 1px solid rgba(40, 167, 69, 0.4);
+  display: block;
+}
+
+#addMemoMessage.error {
+  background: rgba(220, 53, 69, 0.2);
+  border: 1px solid rgba(220, 53, 69, 0.4);
+  display: block;
+}
+
+/* 备忘录列表 */
+.memos-list {
+  margin-top: 40px;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.list-header h3 {
+  margin: 0;
+  font-size: 1.8em;
+  color: #333;
+}
+
+.stats .badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9em;
+}
+
+.badge-info {
+  background: var(--info-color);
+  color: white;
+}
+
+.filter-section {
+  background: white;
+  padding: 20px;
+  border-radius: var(--border-radius);
+  margin-bottom: 20px;
+  box-shadow: var(--card-shadow);
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.filter-btn {
+  padding: 8px 18px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.95em;
+  font-weight: 500;
+  color: #666;
+}
+
+.filter-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.filter-btn.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.search-box {
+  margin-top: 15px;
+}
+
+.search-box .form-control {
+  border: 2px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+/* 备忘录卡片 */
+.memo-item {
+  background: white;
+  border: 2px solid #f0f0f0;
+  border-left: 4px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.memo-item:hover {
+  box-shadow: var(--hover-shadow);
+  transform: translateY(-3px);
+  border-left-width: 6px;
+}
+
+.memo-item.priority-urgent {
+  border-left-color: var(--danger-color);
+  background: linear-gradient(to right, rgba(220, 53, 69, 0.05) 0%, white 50%);
+}
+
+.memo-item.priority-important {
+  border-left-color: var(--warning-color);
+  background: linear-gradient(to right, rgba(255, 193, 7, 0.05) 0%, white 50%);
+}
+
+.memo-item.completed {
+  opacity: 0.7;
+  background: #f8f9fa;
+}
+
+.memo-item.completed .memo-content {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.memo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 15px;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.memo-title {
+  margin: 0;
+  font-size: 1.3em;
+  color: #333;
+  font-weight: 600;
+}
+
+.priority-badge {
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 0.8em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.priority-badge.urgent {
+  background: rgba(220, 53, 69, 0.1);
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+}
+
+.priority-badge.important {
+  background: rgba(255, 193, 7, 0.1);
+  color: #f57c00;
+  border: 1px solid var(--warning-color);
+}
+
+.memo-category {
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 0.85em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge-general { background: #6c757d; color: white; }
+.badge-todo { background: #007bff; color: white; }
+.badge-idea { background: #ffc107; color: #333; }
+.badge-note { background: #28a745; color: white; }
+
+.memo-content {
+  margin: 15px 0;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  color: #555;
+  font-size: 1.05em;
+}
+
+/* 附件显示 */
+.memo-attachments {
+  margin: 15px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.attachment-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.attachment-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.files-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-item {
+  display: inline-block;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #333;
+  transition: var(--transition);
+  font-size: 0.95em;
+}
+
+.file-item:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: translateX(5px);
+}
+
+.memo-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.memo-date {
+  color: #999;
+  font-size: 0.9em;
+}
+
+.memo-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: var(--transition);
+  font-size: 1.2em;
+}
+
+.btn-icon:hover {
+  background: #f0f0f0;
+  transform: scale(1.1);
+}
+
+.complete-icon {
+  color: var(--success-color);
+}
+
+.delete-icon {
+  color: var(--danger-color);
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.empty-icon {
+  font-size: 4em;
+  margin-bottom: 15px;
+}
+
+.empty-state p {
+  font-size: 1.1em;
+  margin: 5px 0;
+}
+
+/* 图片模态框 */
+.image-modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  padding-top: 60px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.9);
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  margin: auto;
+  display: block;
+  max-width: 90%;
+  max-height: 80%;
+  border-radius: 8px;
+  animation: zoomIn 0.3s;
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.5); }
+  to { transform: scale(1); }
+}
+
+.close-modal {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  color: #f1f1f1;
+  font-size: 50px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.close-modal:hover {
+  color: #bbb;
+}
+
+#caption {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+  text-align: center;
+  color: #ccc;
+  padding: 10px 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .memo-container {
+    padding: 10px;
+  }
+  
+  .add-memo-section {
+    padding: 20px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .memo-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .header-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .filter-buttons {
+    justify-content: center;
+  }
+  
+  .images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+}
+</style>
+
+<script>
+// Local memo storage (client-side)
+let localMemos = JSON.parse(localStorage.getItem('memos') || '[]');
+let attachedImages = [];
+let attachedFiles = [];
+
+// Image upload handler
+document.getElementById('imageUpload').addEventListener('change', function(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        attachedImages.push({
+          name: file.name,
+          data: event.target.result,
+          type: file.type
+        });
+        updateAttachmentPreview();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+});
+
+// File upload handler
+document.getElementById('fileUpload').addEventListener('change', function(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      attachedFiles.push({
+        name: file.name,
+        data: event.target.result,
+        type: file.type,
+        size: formatFileSize(file.size)
+      });
+      updateAttachmentPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+// Update attachment preview
+function updateAttachmentPreview() {
+  const preview = document.getElementById('attachmentPreview');
+  preview.innerHTML = '';
+  
+  attachedImages.forEach((img, index) => {
+    const div = document.createElement('div');
+    div.className = 'preview-item';
+    div.innerHTML = `
+      <img src="${img.data}" alt="${img.name}" />
+      <span>${img.name}</span>
+      <span class="preview-remove" onclick="removeAttachment('image', ${index})">✕</span>
+    `;
+    preview.appendChild(div);
+  });
+  
+  attachedFiles.forEach((file, index) => {
+    const div = document.createElement('div');
+    div.className = 'preview-item';
+    div.innerHTML = `
+      <span>📎 ${file.name} (${file.size})</span>
+      <span class="preview-remove" onclick="removeAttachment('file', ${index})">✕</span>
+    `;
+    preview.appendChild(div);
+  });
+}
+
+// Remove attachment
+function removeAttachment(type, index) {
+  if (type === 'image') {
+    attachedImages.splice(index, 1);
+  } else {
+    attachedFiles.splice(index, 1);
+  }
+  updateAttachmentPreview();
+}
+
+// Format file size
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Add memo form submit handler
+document.getElementById('memoForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const title = document.getElementById('memoTitle').value.trim();
+  const content = document.getElementById('memoContent').value.trim();
+  const category = document.getElementById('memoCategory').value;
+  const priority = document.getElementById('memoPriority').value;
+  
+  if (!content && attachedImages.length === 0 && attachedFiles.length === 0) {
+    showMessage('Please enter content or add attachments', 'error');
+    return;
+  }
+  
+  const memo = {
+    id: Date.now(),
+    title: title || null,
+    content: content,
+    category: category,
+    priority: priority,
+    date: new Date().toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }),
+    images: attachedImages.length > 0 ? attachedImages.map(img => img.data) : null,
+    files: attachedFiles.length > 0 ? attachedFiles.map(f => ({
+      name: f.name,
+      data: f.data,
+      size: f.size
+    })) : null,
+    completed: false
+  };
+  
+  localMemos.unshift(memo);
+  localStorage.setItem('memos', JSON.stringify(localMemos));
+  
+  // Clear form
+  document.getElementById('memoTitle').value = '';
+  document.getElementById('memoContent').value = '';
+  document.getElementById('memoCategory').value = 'general';
+  document.getElementById('memoPriority').value = 'normal';
+  attachedImages = [];
+  attachedFiles = [];
+  updateAttachmentPreview();
+  
+  showMessage('✓ Memo added successfully!', 'success');
+  displayMemos();
+  updateStats();
+});
+
+// Show message
+function showMessage(msg, type) {
+  const msgDiv = document.getElementById('addMemoMessage');
+  msgDiv.textContent = msg;
+  msgDiv.className = type;
+  setTimeout(() => {
+    msgDiv.style.display = 'none';
+  }, 3000);
+}
+
+// Display memos
+function displayMemos(filter = 'all', searchText = '') {
+  const display = document.getElementById('memosDisplay');
+  
+  let filteredMemos = filter === 'all' 
+    ? localMemos 
+    : localMemos.filter(m => m.category === filter);
+  
+  if (searchText) {
+    const search = searchText.toLowerCase();
+    filteredMemos = filteredMemos.filter(m => 
+      (m.title && m.title.toLowerCase().includes(search)) ||
+      (m.content && m.content.toLowerCase().includes(search))
+    );
+  }
+  
+  if (filteredMemos.length === 0) {
+    display.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <p>No memos found</p>
+        <p class="text-muted">Try different search criteria</p>
+      </div>
+    `;
+    return;
+  }
+  
+  display.innerHTML = filteredMemos.map(memo => {
+    const priorityBadge = memo.priority === 'urgent' ? '<span class="priority-badge urgent">🔥 Urgent</span>' :
+                         memo.priority === 'important' ? '<span class="priority-badge important">⭐ Important</span>' : '';
+    
+    const imagesHtml = memo.images ? `
+      <div class="images-grid">
+        ${memo.images.map(img => `<img src="${img}" alt="attachment" class="attachment-image" onclick="openImageModal('${img}')" />`).join('')}
+      </div>
+    ` : '';
+    
+    const filesHtml = memo.files ? `
+      <div class="files-list">
+        ${memo.files.map(file => `
+          <a href="${file.data}" class="file-item" download="${file.name}">
+            📎 ${file.name} ${file.size ? '(' + file.size + ')' : ''}
+          </a>
+        `).join('')}
+      </div>
+    ` : '';
+    
+    const attachmentsHtml = (imagesHtml || filesHtml) ? `
+      <div class="memo-attachments">
+        ${imagesHtml}
+        ${filesHtml}
+      </div>
+    ` : '';
+    
+    return `
+      <div class="memo-item priority-${memo.priority || 'normal'} ${memo.completed ? 'completed' : ''}" data-category="${memo.category}" data-id="${memo.id}">
+        <div class="memo-header">
+          <div class="header-left">
+            <h5 class="memo-title">${memo.title || 'Untitled Memo'}</h5>
+          </div>
+          <div class="header-right">
+            ${priorityBadge}
+            <span class="memo-category badge-${memo.category}">${getCategoryName(memo.category)}</span>
+          </div>
+        </div>
+        ${memo.content ? `<div class="memo-content">${memo.content}</div>` : ''}
+        ${attachmentsHtml}
+        <div class="memo-footer">
+          <span class="memo-date">🕐 ${memo.date}</span>
+          <div class="memo-actions">
+            <button class="btn-icon" onclick="toggleComplete(${memo.id})" title="Mark as complete">
+              <span class="complete-icon">${memo.completed ? '↺' : '✓'}</span>
+            </button>
+            <button class="btn-icon" onclick="deleteMemo(${memo.id})" title="Delete">
+              <span class="delete-icon">🗑️</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Get category name
+function getCategoryName(category) {
+  const names = {
+    general: '📋 General',
+    todo: '✅ Todo',
+    idea: '💡 Idea',
+    note: '📖 Note'
+  };
+  return names[category] || category;
+}
+
+// Toggle completion status
+function toggleComplete(id) {
+  const memo = localMemos.find(m => m.id === id);
+  if (memo) {
+    memo.completed = !memo.completed;
+    localStorage.setItem('memos', JSON.stringify(localMemos));
+    displayMemos();
+    updateStats();
+  }
+}
+
+// Delete memo
+function deleteMemo(id) {
+  if (confirm('Are you sure you want to delete this memo?')) {
+    localMemos = localMemos.filter(m => m.id !== id);
+    localStorage.setItem('memos', JSON.stringify(localMemos));
+    showMessage('✓ Memo deleted', 'success');
+    displayMemos();
+    updateStats();
+  }
+}
+
+// Update stats
+function updateStats() {
+  const count = localMemos.length;
+  document.getElementById('memoCount').textContent = `${count} memo${count !== 1 ? 's' : ''}`;
+}
+
+// Open image modal
+function openImageModal(src) {
+  const modal = document.getElementById('imageModal');
+  const modalImg = document.getElementById('modalImage');
+  modal.style.display = 'block';
+  modalImg.src = src;
+}
+
+// Close image modal
+function closeImageModal() {
+  document.getElementById('imageModal').style.display = 'none';
+}
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const category = this.getAttribute('data-category');
+    const searchText = document.getElementById('searchInput').value;
+    displayMemos(category, searchText);
+  });
+});
+
+// Search function
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  const activeFilter = document.querySelector('.filter-btn.active').getAttribute('data-category');
+  displayMemos(activeFilter, e.target.value);
+});
+
+// Initialize display
+document.addEventListener('DOMContentLoaded', function() {
+  if (localMemos.length > 0) {
+    displayMemos();
+  }
+  updateStats();
+  document.querySelector('.filter-btn[data-category="all"]').classList.add('active');
+});
+</script>

@@ -21,6 +21,7 @@ author: Junle Chen(陈俊乐)
 
 navbar-links:
   About Me: "aboutme"
+  Memos: "memos"
   Resources:
     - Academic page: "https://junle-chen.github.io/"
     - Github respository: "https://github.com/junle-chen?tab=repositories"
