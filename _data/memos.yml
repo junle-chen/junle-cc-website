@@ -1,9 +1,12 @@
-# 这个文件用于存储备忘录数据
-# 格式示例:
-# - id: 1
-#   title: "示例标题"
-#   content: "示例内容"
-#   category: "general"
-#   date: "2024-01-01 12:00:00"
+# Public Memos
+# Auto-generated - Do not edit manually
 
-[]
+- id: 1763965893968
+  title: "hh"
+  content: "hh"
+  category: general
+  priority: normal
+  visibility: public
+  date: "11/24/2025, 02:31 PM"
+  completed: false
+
