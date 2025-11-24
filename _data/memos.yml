@@ -1,6 +1,15 @@
 # Public Memos
 # Auto-generated - Do not edit manually
 
+- id: 1763970345849
+  title: "welcome"
+  content: "welcome"
+  category: general
+  priority: normal
+  visibility: public
+  date: "11/24/2025, 03:45 PM"
+  completed: false
+
 - id: 1763969440883
   title: "yyyy"
   content: "yyyy"
