@@ -18,3 +18,7 @@ package-lock.json
 Gemfile
 Gemfile
 _posts/.obsidian.zip
+
+# Local development configuration - DO NOT commit
+_config_local.yml
+assets/js/memo-token.js

@@ -2,13 +2,19 @@
 layout: page
 ---
 
+<!-- Optional: Load local token for development (file is in .gitignore) -->
+<script src="{{ '/assets/js/memo-token.js' | relative_url }}" onerror="console.log('No local token file')"></script>
+
 {{ content }}
 
 <div class="memo-container">
   <div class="add-memo-section">
     <div class="section-header">
       <h3>✨ Add New Memo</h3>
-      <p class="text-muted">Record your ideas, tasks and important notes</p>
+      <button class="btn-settings" onclick="toggleGithubSettings()" title="GitHub Settings">
+        ⚙️
+      </button>
+      <p class="text-muted">Record your ideas, tasks and important notes · Public memos auto-sync to GitHub</p>
     </div>
     <form id="memoForm">
       <div class="form-group">
@@ -67,6 +73,33 @@ layout: page
       </button>
     </form>
     <div id="addMemoMessage"></div>
+    
+    <!-- GitHub Settings Panel (right sidebar) -->
+    <div class="github-settings" id="githubSettings" style="display: none;">
+      <h5>
+        <span>⚙️ GitHub Settings</span>
+        <button class="close-btn" onclick="toggleGithubSettings()" title="Close">✕</button>
+      </h5>
+      <div class="form-group">
+        <label for="githubToken">GitHub Personal Access Token</label>
+        <input type="password" id="githubToken" class="form-control" placeholder="github_pat_..." />
+        <small class="form-text">
+          Need a token? <a href="https://github.com/settings/tokens/new?scopes=repo&description=Memo%20Sync" target="_blank">Create one here</a> (select "repo" scope)
+        </small>
+      </div>
+      <div class="form-group">
+        <label for="githubBranch">Branch</label>
+        <input type="text" id="githubBranch" class="form-control" value="master" />
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="autoSync" checked /> Auto-sync public memos to GitHub
+        </label>
+      </div>
+      <button type="button" class="btn btn-primary" onclick="saveGithubSettings()">💾 Save Settings</button>
+      <button type="button" class="btn btn-outline-secondary" onclick="testGithubConnection()">🔗 Test Connection</button>
+      <div id="githubSettingsMessage"></div>
+    </div>
   </div>
 
   <div class="memos-list">
@@ -208,6 +241,10 @@ layout: page
   color: white;
 }
 
+.section-header {
+  position: relative;
+}
+
 .section-header h3 {
   margin: 0 0 5px 0;
   font-size: 1.8em;
@@ -217,6 +254,26 @@ layout: page
 .section-header p {
   margin: 0 0 20px 0;
   opacity: 0.9;
+}
+
+.btn-settings {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: var(--transition);
+  line-height: 1;
+}
+
+.btn-settings:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: rotate(90deg) scale(1.1);
 }
 
 .form-group {
@@ -813,6 +870,122 @@ layout: page
   padding: 10px 0;
 }
 
+/* GitHub Settings Panel */
+.github-settings {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100vh;
+  background: white;
+  border-left: 3px solid #0288D1;
+  padding: 30px;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+  overflow-y: auto;
+  z-index: 10000;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.github-settings h5 {
+  color: #0288D1;
+  margin: 0 0 20px 0;
+  font-size: 1.5em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.github-settings .close-btn {
+  background: transparent;
+  border: none;
+  color: #999;
+  font-size: 1.5em;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: var(--transition);
+}
+
+.github-settings .close-btn:hover {
+  color: #333;
+  transform: rotate(90deg);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.github-settings h5 {
+  color: #0288D1;
+  margin-bottom: 10px;
+}
+
+.github-settings .form-group {
+  margin-bottom: 15px;
+}
+
+.github-settings .form-control {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.github-settings .form-text {
+  font-size: 0.85em;
+  color: #666;
+}
+
+.github-settings .form-text a {
+  color: #0288D1;
+  text-decoration: none;
+}
+
+.github-settings .form-text a:hover {
+  text-decoration: underline;
+}
+
+.github-settings .btn {
+  margin-right: 10px;
+  margin-top: 10px;
+}
+
+#githubSettingsMessage {
+  padding: 10px;
+  border-radius: 4px;
+  display: none;
+}
+
+#githubSettingsMessage.success {
+  background: rgba(40, 167, 69, 0.2);
+  border: 1px solid rgba(40, 167, 69, 0.4);
+  color: #28a745;
+  display: block;
+}
+
+#githubSettingsMessage.error {
+  background: rgba(220, 53, 69, 0.2);
+  border: 1px solid rgba(220, 53, 69, 0.4);
+  color: #dc3545;
+  display: block;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .memo-container {
@@ -849,6 +1022,12 @@ layout: page
   .images-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
+  
+  /* 手机端设置面板全屏 */
+  .github-settings {
+    width: 100%;
+    left: 0;
+  }
 }
 </style>
 
@@ -858,6 +1037,309 @@ let db;
 let localMemos = [];
 let attachedImages = [];
 let attachedFiles = [];
+
+// GitHub Configuration
+// Token is stored in browser's localStorage for security
+// Users need to configure their own token on first use
+const GITHUB_CONFIG = {
+  owner: 'junle-chen',
+  repo: 'junle-cc-website',
+  branch: 'master',
+  token: localStorage.getItem('github_token') || '',
+  autoSync: localStorage.getItem('github_auto_sync') !== 'false'
+};
+
+// Load GitHub settings from localStorage
+function loadGithubSettings() {
+  const tokenInput = document.getElementById('githubToken');
+  const autoSyncCheck = document.getElementById('autoSync');
+  const branchInput = document.getElementById('githubBranch');
+  
+  if (tokenInput) tokenInput.value = GITHUB_CONFIG.token;
+  if (autoSyncCheck) autoSyncCheck.checked = GITHUB_CONFIG.autoSync;
+  if (branchInput) branchInput.value = GITHUB_CONFIG.branch;
+  
+  // Show warning if no token configured
+  if (!GITHUB_CONFIG.token) {
+    const settingsPanel = document.getElementById('githubSettings');
+    if (settingsPanel) {
+      settingsPanel.style.border = '2px solid #ffc107';
+      settingsPanel.style.background = 'rgba(255, 193, 7, 0.05)';
+    }
+    showGithubMessage('⚠️ Please configure your GitHub token to enable sync', 'error');
+  }
+}
+
+// Save GitHub settings to localStorage
+function saveGithubSettings() {
+  const token = document.getElementById('githubToken').value.trim();
+  const branch = document.getElementById('githubBranch').value.trim();
+  const autoSync = document.getElementById('autoSync').checked;
+  
+  if (!token) {
+    showGithubMessage('⚠️ Please enter a GitHub token', 'error');
+    return;
+  }
+  
+  localStorage.setItem('github_token', token);
+  localStorage.setItem('github_branch', branch);
+  localStorage.setItem('github_auto_sync', autoSync);
+  
+  GITHUB_CONFIG.token = token;
+  GITHUB_CONFIG.branch = branch;
+  GITHUB_CONFIG.autoSync = autoSync;
+  
+  // Reset panel styling
+  const settingsPanel = document.getElementById('githubSettings');
+  if (settingsPanel) {
+    settingsPanel.style.border = '';
+    settingsPanel.style.background = '';
+  }
+  
+  showGithubMessage('✅ Settings saved successfully! You can now sync memos.', 'success');
+}
+
+// Toggle GitHub settings panel
+function toggleGithubSettings() {
+  const panel = document.getElementById('githubSettings');
+  if (panel) {
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+// Show GitHub settings message
+function showGithubMessage(msg, type) {
+  const msgDiv = document.getElementById('githubSettingsMessage');
+  if (!msgDiv) return;
+  
+  msgDiv.textContent = msg;
+  msgDiv.className = type;
+  msgDiv.style.display = 'block';
+  
+  setTimeout(() => {
+    if (type === 'success') {
+      msgDiv.style.display = 'none';
+    }
+  }, 5000);
+}
+
+// Test GitHub connection
+async function testGithubConnection() {
+  const token = document.getElementById('githubToken').value.trim();
+  
+  if (!token) {
+    showGithubMessage('Please enter a GitHub token first', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      showGithubMessage(`✓ Connection successful! Repository: ${data.full_name}`, 'success');
+    } else {
+      const error = await response.json();
+      showGithubMessage(`✗ Connection failed: ${error.message}`, 'error');
+    }
+  } catch (error) {
+    showGithubMessage(`✗ Connection failed: ${error.message}`, 'error');
+  }
+}
+
+// Sync memo to GitHub
+async function syncMemoToGithub(memo) {
+  if (!GITHUB_CONFIG.token) {
+    console.log('No GitHub token configured, skipping sync');
+    return { success: false, error: 'No token configured' };
+  }
+  
+  if (memo.visibility !== 'public') {
+    console.log('Memo is private, skipping sync');
+    return { success: true, skipped: true };
+  }
+  
+  try {
+    // 1. Read current _data/memos.yml
+    const memosYmlPath = '_data/memos.yml';
+    let currentContent = '';
+    let currentSha = '';
+    
+    try {
+      const getResponse = await fetch(
+        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${memosYmlPath}?ref=${GITHUB_CONFIG.branch}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28'
+          }
+        }
+      );
+      
+      if (getResponse.ok) {
+        const data = await getResponse.json();
+        currentSha = data.sha;
+        currentContent = atob(data.content);
+      } else {
+        const errorData = await getResponse.json();
+        console.log('Error reading file:', errorData);
+      }
+    } catch (e) {
+      console.log('memos.yml not found, will create new file');
+    }
+    
+    // 2. Parse current memos
+    let memos = [];
+    if (currentContent) {
+      // Simple YAML parsing (assuming our format)
+      const lines = currentContent.split('\n');
+      let currentMemo = null;
+      
+      for (const line of lines) {
+        if (line.startsWith('- id:')) {
+          if (currentMemo) memos.push(currentMemo);
+          currentMemo = { id: parseInt(line.split(':')[1].trim()) };
+        } else if (currentMemo) {
+          const match = line.match(/^\s+(\w+):\s*(.+)$/);
+          if (match) {
+            const [, key, value] = match;
+            currentMemo[key] = value.replace(/^["']|["']$/g, '');
+          }
+        }
+      }
+      if (currentMemo) memos.push(currentMemo);
+    }
+    
+    // 3. Add or update memo
+    const existingIndex = memos.findIndex(m => m.id === memo.id);
+    const memoForYaml = {
+      id: memo.id,
+      title: memo.title || 'Untitled',
+      content: memo.content,
+      category: memo.category,
+      priority: memo.priority,
+      visibility: memo.visibility,
+      date: memo.date,
+      completed: memo.completed || false
+    };
+    
+    if (existingIndex >= 0) {
+      memos[existingIndex] = memoForYaml;
+    } else {
+      memos.unshift(memoForYaml);
+    }
+    
+    // 4. Convert to YAML
+    let yamlContent = '# Public Memos\n# Auto-generated - Do not edit manually\n\n';
+    memos.forEach(m => {
+      yamlContent += `- id: ${m.id}\n`;
+      yamlContent += `  title: "${m.title}"\n`;
+      yamlContent += `  content: "${m.content.replace(/\n/g, '\\n').replace(/"/g, '\\"')}"\n`;
+      yamlContent += `  category: ${m.category}\n`;
+      yamlContent += `  priority: ${m.priority}\n`;
+      yamlContent += `  visibility: ${m.visibility}\n`;
+      yamlContent += `  date: "${m.date}"\n`;
+      yamlContent += `  completed: ${m.completed}\n\n`;
+    });
+    
+    // 5. Save images to assets/images/memos/
+    if (memo.images && memo.images.length > 0) {
+      for (let i = 0; i < memo.images.length; i++) {
+        const imgData = memo.images[i];
+        const imgPath = `assets/images/memos/${memo.id}_${i}.png`;
+        
+        try {
+          const base64Data = imgData.split(',')[1];
+          const imgResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${imgPath}`,
+            {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+                'Accept': 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                message: `Add image for memo ${memo.id}`,
+                content: base64Data,
+                branch: GITHUB_CONFIG.branch
+              })
+            }
+          );
+          
+          if (!imgResponse.ok) {
+            const imgError = await imgResponse.json();
+            console.error('Image upload error:', imgError);
+          }
+        } catch (e) {
+          console.error('Error uploading image:', e);
+        }
+      }
+    }
+    
+    // 6. Update memos.yml (重新获取最新SHA以避免冲突)
+    let latestSha = currentSha;
+    if (currentSha) {
+      try {
+        const refreshResponse = await fetch(
+          `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${memosYmlPath}?ref=${GITHUB_CONFIG.branch}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+              'Accept': 'application/vnd.github+json',
+              'X-GitHub-Api-Version': '2022-11-28'
+            }
+          }
+        );
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          latestSha = refreshData.sha;
+        }
+      } catch (e) {
+        console.log('Could not refresh SHA, using cached version');
+      }
+    }
+    
+    const updateResponse = await fetch(
+      `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${memosYmlPath}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${GITHUB_CONFIG.token}`,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Add/Update memo: ${memo.title || 'Untitled'}`,
+          content: btoa(unescape(encodeURIComponent(yamlContent))),
+          sha: latestSha || undefined,
+          branch: GITHUB_CONFIG.branch
+        })
+      }
+    );
+    
+    if (updateResponse.ok) {
+      return { success: true };
+    } else {
+      const error = await updateResponse.json();
+      console.error('Update error details:', error);
+      return { success: false, error: error.message || JSON.stringify(error) };
+    }
+    
+  } catch (error) {
+    console.error('GitHub sync error:', error);
+    return { success: false, error: error.message };
+  }
+}
 
 // Initialize IndexedDB
 async function initDB() {
@@ -1057,9 +1539,34 @@ document.getElementById('memoForm').addEventListener('submit', async function(e)
   
   try {
     console.log('Saving memo:', memo);
+    
+    // Show initial message BEFORE any async operations
+    if (GITHUB_CONFIG.autoSync && memo.visibility === 'public') {
+      showMessage('💾 Saving memo and syncing to GitHub...', 'success', false);
+    }
+    
+    // Save to IndexedDB
     await saveMemo(memo);
     localMemos.unshift(memo);
     console.log('Memo saved successfully');
+    
+    // Auto-sync to GitHub if enabled and memo is public
+    if (GITHUB_CONFIG.autoSync && memo.visibility === 'public') {
+      const syncResult = await syncMemoToGithub(memo);
+      
+      if (syncResult.success) {
+        showMessage('✅ Memo added and synced to GitHub successfully! It will appear on your website in 1-2 minutes.', 'success', true);
+      } else if (syncResult.skipped) {
+        showMessage('✅ Private memo added successfully (saved locally only)', 'success', true);
+      } else {
+        showMessage('⚠️ Memo saved locally, but GitHub sync failed: ' + syncResult.error + '. Please check your connection or token.', 'error', true);
+      }
+    } else if (visibility === 'private') {
+      showMessage('✅ Private memo added successfully (saved locally only)', 'success', true);
+    } else {
+      // Fallback (shouldn't happen with current config)
+      showMessage('✅ Memo added successfully!', 'success', true);
+    }
     
     // Clear form
     document.getElementById('memoTitle').value = '';
@@ -1071,26 +1578,37 @@ document.getElementById('memoForm').addEventListener('submit', async function(e)
     attachedFiles = [];
     updateAttachmentPreview();
     
-    const visMsg = visibility === 'private' ? ' (Local only - not synced)' : ' (Click sync button to publish)';
-    showMessage('✓ Memo added successfully!' + visMsg, 'success');
     displayMemos();
     updateStats();
   } catch (error) {
     console.error('Error saving memo:', error);
-    showMessage('Error saving memo: ' + error.message, 'error');
+    showMessage('❌ Error saving memo: ' + error.message, 'error');
   }
 });
 
 // Show message
-function showMessage(msg, type) {
+let messageTimer = null;
+function showMessage(msg, type, autoHide = true) {
   const msgDiv = document.getElementById('addMemoMessage');
   msgDiv.textContent = msg;
   msgDiv.className = type;
   msgDiv.style.display = 'block';
-  setTimeout(() => {
-    msgDiv.className = '';
-    msgDiv.style.display = 'none';
-  }, 3000);
+  
+  // Clear previous timer
+  if (messageTimer) {
+    clearTimeout(messageTimer);
+    messageTimer = null;
+  }
+  
+  // Auto hide after delay if specified
+  if (autoHide) {
+    const displayTime = msg.includes('synced') || msg.includes('failed') ? 5000 : 3000;
+    messageTimer = setTimeout(() => {
+      msgDiv.className = '';
+      msgDiv.style.display = 'none';
+      messageTimer = null;
+    }, displayTime);
+  }
 }
 
 // Display memos
@@ -1187,7 +1705,6 @@ function displayMemos(filter = 'all', searchText = '') {
         <div class="memo-footer">
           <span class="memo-date">🕐 ${memo.date}</span>
           <div class="memo-actions">
-            ${syncButton}
             <button class="btn-icon" onclick="toggleComplete(${memo.id})" title="Mark as complete">
               <span class="complete-icon">${memo.completed ? '↺' : '✓'}</span>
             </button>
@@ -1213,17 +1730,32 @@ function getCategoryName(category) {
 }
 
 // Show sync command
-function showSyncCommand(memoId) {
+async function showSyncCommand(memoId) {
   const memo = localMemos.find(m => m.id === memoId);
   if (!memo) return;
   
-  const memoJson = JSON.stringify(memo);
-  const command = `echo '${memoJson.replace(/'/g, "'\\''")}' | ruby sync_memo.rb sync`;
-  
-  const modal = prompt(
-    `📤 Copy and run this command in your terminal:\n\n${command}\n\nThen commit and push:\ngit add _data/memos.yml assets/\ngit commit -m "Add memo: ${memo.title || 'Untitled'}"\ngit push`,
-    command
-  );
+  // If GitHub token is configured, use API sync
+  if (GITHUB_CONFIG.token) {
+    if (confirm('Sync this memo to GitHub now?')) {
+      showMessage('Syncing to GitHub...', 'success');
+      const result = await syncMemoToGithub(memo);
+      
+      if (result.success) {
+        showMessage('✓ Memo synced to GitHub successfully!', 'success');
+      } else {
+        showMessage('✗ Sync failed: ' + result.error, 'error');
+      }
+    }
+  } else {
+    // Fallback to manual command
+    const memoJson = JSON.stringify(memo);
+    const command = `echo '${memoJson.replace(/'/g, "'\\''")}' | ruby sync_memo.rb sync`;
+    
+    prompt(
+      `No GitHub token configured.\n\nOption 1: Configure token in ⚙️ GitHub Settings for automatic sync\n\nOption 2: Run this command manually:\n\n${command}`,
+      command
+    );
+  }
 }
 
 // Update stats
@@ -1312,12 +1844,21 @@ document.getElementById('searchInput').addEventListener('input', function(e) {
 // Initialize display
 document.addEventListener('DOMContentLoaded', async function() {
   try {
+    // Load GitHub settings
+    loadGithubSettings();
+    
+    // Initialize database and memos
     await initDB();
     await loadMemos();
     displayMemos();
     updateStats();
     document.querySelector('.filter-btn[data-category="all"]').classList.add('active');
     document.querySelector('.visibility-btn[data-visibility="all"]').classList.add('active');
+    
+    // Show auto-sync status
+    if (GITHUB_CONFIG.autoSync && GITHUB_CONFIG.token) {
+      console.log('✓ GitHub auto-sync enabled');
+    }
   } catch (error) {
     console.error('Error initializing app:', error);
     // Fallback to localStorage if IndexedDB fails
