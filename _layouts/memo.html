@@ -20,7 +20,7 @@ layout: page
         <textarea id="memoContent" class="form-control" rows="4" placeholder="Enter your memo content... Supports multiple lines"></textarea>
       </div>
       <div class="form-row">
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-4">
           <label for="memoCategory">🏷️ Category</label>
           <select id="memoCategory" class="form-control">
             <option value="general">📋 General</option>
@@ -29,12 +29,19 @@ layout: page
             <option value="note">📖 Note</option>
           </select>
         </div>
-        <div class="form-group col-md-6">
+        <div class="form-group col-md-4">
           <label for="memoPriority">⭐ Priority</label>
-          <select id="memoPriority" class="form-control">
+          <select id="memooPriority" class="form-control">
             <option value="normal">Normal</option>
             <option value="important">Important</option>
             <option value="urgent">Urgent</option>
+          </select>
+        </div>
+        <div class="form-group col-md-4">
+          <label for="memoVisibility">🔒 Visibility</label>
+          <select id="memoVisibility" class="form-control">
+            <option value="public" selected>🌍 Public (sync to server)</option>
+            <option value="private">🔐 Private (local only)</option>
           </select>
         </div>
       </div>
@@ -67,6 +74,8 @@ layout: page
       <h3>📚 My Memos</h3>
       <div class="stats">
         <span id="memoCount" class="badge badge-info">0 memos</span>
+        <span id="publicCount" class="badge badge-success">0 public</span>
+        <span id="privateCount" class="badge badge-warning">0 private</span>
       </div>
     </div>
     
@@ -77,6 +86,11 @@ layout: page
         <button class="filter-btn" data-category="todo">✅ Todo</button>
         <button class="filter-btn" data-category="idea">💡 Idea</button>
         <button class="filter-btn" data-category="note">📖 Note</button>
+      </div>
+      <div class="visibility-filters" style="margin-top: 10px;">
+        <button class="visibility-btn active" data-visibility="all">All</button>
+        <button class="visibility-btn" data-visibility="public">🌍 Public</button>
+        <button class="visibility-btn" data-visibility="private">🔐 Private</button>
       </div>
       <div class="search-box">
         <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search memos..." />
@@ -401,6 +415,16 @@ layout: page
   color: white;
 }
 
+.badge-success {
+  background: var(--success-color);
+  color: white;
+}
+
+.badge-warning {
+  background: var(--warning-color);
+  color: #333;
+}
+
 .filter-section {
   background: white;
   padding: 20px;
@@ -438,6 +462,40 @@ layout: page
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
+}
+
+.visibility-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.visibility-btn {
+  padding: 8px 18px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.95em;
+  font-weight: 500;
+  color: #666;
+}
+
+.visibility-btn:hover {
+  border-color: var(--success-color);
+  color: var(--success-color);
+  transform: translateY(-2px);
+}
+
+.visibility-btn.active {
+  background: var(--success-color);
+  color: white;
+  border-color: var(--success-color);
+}
+
+.col-md-4 {
+  flex: 1;
 }
 
 .search-box {
@@ -512,6 +570,26 @@ layout: page
   font-size: 1.3em;
   color: #333;
   font-weight: 600;
+}
+
+.visibility-badge {
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 0.8em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.visibility-badge.public {
+  background: rgba(40, 167, 69, 0.1);
+  color: var(--success-color);
+  border: 1px solid var(--success-color);
+}
+
+.visibility-badge.private {
+  background: rgba(108, 117, 125, 0.1);
+  color: var(--secondary-color);
+  border: 1px solid var(--secondary-color);
 }
 
 .priority-badge {
@@ -648,6 +726,15 @@ layout: page
 
 .delete-icon {
   color: var(--danger-color);
+}
+
+.btn-sync {
+  color: var(--info-color);
+  font-size: 1.1em;
+}
+
+.btn-sync:hover {
+  background: rgba(23, 162, 184, 0.1);
 }
 
 /* 空状态 */
@@ -934,6 +1021,7 @@ document.getElementById('memoForm').addEventListener('submit', async function(e)
   const content = document.getElementById('memoContent').value.trim();
   const category = document.getElementById('memoCategory').value;
   const priority = document.getElementById('memoPriority').value;
+  const visibility = document.getElementById('memoVisibility').value;
   
   if (!content && attachedImages.length === 0 && attachedFiles.length === 0) {
     showMessage('Please enter content or add attachments', 'error');
@@ -946,7 +1034,8 @@ document.getElementById('memoForm').addEventListener('submit', async function(e)
     content: content,
     category: category,
     priority: priority,
-    date: new Date().toLocaleString('zh-CN', {
+    visibility: visibility,
+    date: new Date().toLocaleString('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -971,11 +1060,13 @@ document.getElementById('memoForm').addEventListener('submit', async function(e)
     document.getElementById('memoContent').value = '';
     document.getElementById('memoCategory').value = 'general';
     document.getElementById('memoPriority').value = 'normal';
+    document.getElementById('memoVisibility').value = 'public';
     attachedImages = [];
     attachedFiles = [];
     updateAttachmentPreview();
     
-    showMessage('✓ Memo added successfully!', 'success');
+    const visMsg = visibility === 'private' ? ' (Local only - not synced)' : ' (Click sync button to publish)';
+    showMessage('✓ Memo added successfully!' + visMsg, 'success');
     displayMemos();
     updateStats();
   } catch (error) {
@@ -995,13 +1086,24 @@ function showMessage(msg, type) {
 }
 
 // Display memos
+let currentVisibility = 'all';
+
 function displayMemos(filter = 'all', searchText = '') {
   const display = document.getElementById('memosDisplay');
   
-  let filteredMemos = filter === 'all' 
-    ? localMemos 
-    : localMemos.filter(m => m.category === filter);
+  let filteredMemos = localMemos;
   
+  // Filter by category
+  if (filter !== 'all') {
+    filteredMemos = filteredMemos.filter(m => m.category === filter);
+  }
+  
+  // Filter by visibility
+  if (currentVisibility !== 'all') {
+    filteredMemos = filteredMemos.filter(m => (m.visibility || 'public') === currentVisibility);
+  }
+  
+  // Filter by search
   if (searchText) {
     const search = searchText.toLowerCase();
     filteredMemos = filteredMemos.filter(m => 
@@ -1015,7 +1117,7 @@ function displayMemos(filter = 'all', searchText = '') {
       <div class="empty-state">
         <div class="empty-icon">🔍</div>
         <p>No memos found</p>
-        <p class="text-muted">Try different search criteria</p>
+        <p class="text-muted">Try different filters or search criteria</p>
       </div>
     `;
     return;
@@ -1024,6 +1126,15 @@ function displayMemos(filter = 'all', searchText = '') {
   display.innerHTML = filteredMemos.map(memo => {
     const priorityBadge = memo.priority === 'urgent' ? '<span class="priority-badge urgent">🔥 Urgent</span>' :
                          memo.priority === 'important' ? '<span class="priority-badge important">⭐ Important</span>' : '';
+    
+    const visibilityBadge = (memo.visibility || 'public') === 'private' ? 
+      '<span class="visibility-badge private">🔐 Private</span>' :
+      '<span class="visibility-badge public">🌍 Public</span>';
+    
+    const syncButton = (memo.visibility || 'public') === 'public' ? 
+      `<button class="btn-icon btn-sync" onclick="showSyncCommand(${memo.id})" title="Sync to server">
+        <span>☁️</span>
+      </button>` : '';
     
     const imagesHtml = memo.images ? `
       <div class="images-grid">
@@ -1049,12 +1160,16 @@ function displayMemos(filter = 'all', searchText = '') {
     ` : '';
     
     return `
-      <div class="memo-item priority-${memo.priority || 'normal'} ${memo.completed ? 'completed' : ''}" data-category="${memo.category}" data-id="${memo.id}">
+      <div class="memo-item priority-${memo.priority || 'normal'} ${memo.completed ? 'completed' : ''}" 
+           data-category="${memo.category}" 
+           data-visibility="${memo.visibility || 'public'}"
+           data-id="${memo.id}">
         <div class="memo-header">
           <div class="header-left">
             <h5 class="memo-title">${memo.title || 'Untitled Memo'}</h5>
           </div>
           <div class="header-right">
+            ${visibilityBadge}
             ${priorityBadge}
             <span class="memo-category badge-${memo.category}">${getCategoryName(memo.category)}</span>
           </div>
@@ -1064,6 +1179,7 @@ function displayMemos(filter = 'all', searchText = '') {
         <div class="memo-footer">
           <span class="memo-date">🕐 ${memo.date}</span>
           <div class="memo-actions">
+            ${syncButton}
             <button class="btn-icon" onclick="toggleComplete(${memo.id})" title="Mark as complete">
               <span class="complete-icon">${memo.completed ? '↺' : '✓'}</span>
             </button>
@@ -1086,6 +1202,30 @@ function getCategoryName(category) {
     note: '📖 Note'
   };
   return names[category] || category;
+}
+
+// Show sync command
+function showSyncCommand(memoId) {
+  const memo = localMemos.find(m => m.id === memoId);
+  if (!memo) return;
+  
+  const memoJson = JSON.stringify(memo);
+  const command = `echo '${memoJson.replace(/'/g, "'\\''")}' | ruby sync_memo.rb sync`;
+  
+  const modal = prompt(
+    `📤 Copy and run this command in your terminal:\n\n${command}\n\nThen commit and push:\ngit add _data/memos.yml assets/\ngit commit -m "Add memo: ${memo.title || 'Untitled'}"\ngit push`,
+    command
+  );
+}
+
+// Update stats
+function updateStats() {
+  const publicMemos = localMemos.filter(m => (m.visibility || 'public') === 'public');
+  const privateMemos = localMemos.filter(m => m.visibility === 'private');
+  
+  document.getElementById('memoCount').textContent = `${localMemos.length} memo${localMemos.length !== 1 ? 's' : ''}`;
+  document.getElementById('publicCount').textContent = `${publicMemos.length} public`;
+  document.getElementById('privateCount').textContent = `${privateMemos.length} private`;
 }
 
 // Toggle completion status
@@ -1119,12 +1259,6 @@ async function deleteMemo(id) {
   }
 }
 
-// Update stats
-function updateStats() {
-  const count = localMemos.length;
-  document.getElementById('memoCount').textContent = `${count} memo${count !== 1 ? 's' : ''}`;
-}
-
 // Open image modal
 function openImageModal(src) {
   const modal = document.getElementById('imageModal');
@@ -1144,6 +1278,18 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     const category = this.getAttribute('data-category');
+    const searchText = document.getElementById('searchInput').value;
+    displayMemos(category, searchText);
+  });
+});
+
+// Visibility filter buttons
+document.querySelectorAll('.visibility-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.visibility-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentVisibility = this.getAttribute('data-visibility');
+    const category = document.querySelector('.filter-btn.active').getAttribute('data-category');
     const searchText = document.getElementById('searchInput').value;
     displayMemos(category, searchText);
   });
