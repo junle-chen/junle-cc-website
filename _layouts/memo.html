@@ -31,7 +31,7 @@ layout: page
         </div>
         <div class="form-group col-md-4">
           <label for="memoPriority">⭐ Priority</label>
-          <select id="memooPriority" class="form-control">
+          <select id="memoPriority" class="form-control">
             <option value="normal">Normal</option>
             <option value="important">Important</option>
             <option value="urgent">Urgent</option>
@@ -1017,11 +1017,15 @@ function formatFileSize(bytes) {
 document.getElementById('memoForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
+  console.log('Form submitted');
+  
   const title = document.getElementById('memoTitle').value.trim();
   const content = document.getElementById('memoContent').value.trim();
   const category = document.getElementById('memoCategory').value;
   const priority = document.getElementById('memoPriority').value;
   const visibility = document.getElementById('memoVisibility').value;
+  
+  console.log('Form values:', { title, content, category, priority, visibility });
   
   if (!content && attachedImages.length === 0 && attachedFiles.length === 0) {
     showMessage('Please enter content or add attachments', 'error');
@@ -1052,8 +1056,10 @@ document.getElementById('memoForm').addEventListener('submit', async function(e)
   };
   
   try {
+    console.log('Saving memo:', memo);
     await saveMemo(memo);
     localMemos.unshift(memo);
+    console.log('Memo saved successfully');
     
     // Clear form
     document.getElementById('memoTitle').value = '';
@@ -1071,7 +1077,7 @@ document.getElementById('memoForm').addEventListener('submit', async function(e)
     updateStats();
   } catch (error) {
     console.error('Error saving memo:', error);
-    showMessage('Error saving memo. Please try again.', 'error');
+    showMessage('Error saving memo: ' + error.message, 'error');
   }
 });
 
@@ -1080,7 +1086,9 @@ function showMessage(msg, type) {
   const msgDiv = document.getElementById('addMemoMessage');
   msgDiv.textContent = msg;
   msgDiv.className = type;
+  msgDiv.style.display = 'block';
   setTimeout(() => {
+    msgDiv.className = '';
     msgDiv.style.display = 'none';
   }, 3000);
 }
@@ -1306,20 +1314,18 @@ document.addEventListener('DOMContentLoaded', async function() {
   try {
     await initDB();
     await loadMemos();
-    if (localMemos.length > 0) {
-      displayMemos();
-    }
+    displayMemos();
     updateStats();
     document.querySelector('.filter-btn[data-category="all"]').classList.add('active');
+    document.querySelector('.visibility-btn[data-visibility="all"]').classList.add('active');
   } catch (error) {
     console.error('Error initializing app:', error);
     // Fallback to localStorage if IndexedDB fails
     localMemos = JSON.parse(localStorage.getItem('memos') || '[]');
-    if (localMemos.length > 0) {
-      displayMemos();
-    }
+    displayMemos();
     updateStats();
     document.querySelector('.filter-btn[data-category="all"]').classList.add('active');
+    document.querySelector('.visibility-btn[data-visibility="all"]').classList.add('active');
   }
 });
 </script>
